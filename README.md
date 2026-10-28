@@ -37,12 +37,12 @@ Chủ báo đã cọc
 
 ## Phiên bản 1 (MVP: phiên bản đơn giản nhất dùng được)
 
-- [ ] Thêm tòa nhà: nhập địa chỉ, web tìm vị trí, tôi kiểm tra và kéo chấm về đúng chỗ
-- [ ] Thêm căn hộ: form nhập đặc điểm, tải ảnh, chọn trạng thái
-- [ ] Bản đồ hiển thị căn hộ, màu theo trạng thái
-- [ ] Bộ lọc: tên đường, số phòng ngủ, khoảng giá, ngày dọn vào
-- [ ] Giỏ hàng và link gửi khách (khách không thấy thông tin chủ nhà và hoa hồng)
-- [ ] Trang quản lý có mật khẩu, chỉ tôi vào được
+- [x] Thêm tòa nhà: nhập địa chỉ, web tìm vị trí, tôi kiểm tra và kéo chấm về đúng chỗ
+- [x] Thêm căn hộ: form nhập đặc điểm, tải ảnh, chọn trạng thái
+- [x] Bản đồ hiển thị căn hộ, màu theo trạng thái
+- [x] Bộ lọc: tên đường, số phòng ngủ, khoảng giá, ngày dọn vào
+- [x] Giỏ hàng và link gửi khách (khách không thấy thông tin chủ nhà và hoa hồng)
+- [x] Trang quản lý có mật khẩu, chỉ tôi vào được
 
 ## Phiên bản sau
 
@@ -59,3 +59,54 @@ Chủ báo đã cọc
 | Cơ sở dữ liệu và lưu ảnh | PostgreSQL trên Supabase | Miễn phí, dùng SQL |
 | Giao diện web | Streamlit (Python) | Đã dùng ở dự án trước |
 | Bản đồ | OpenStreetMap | Miễn phí, không cần thẻ thanh toán |
+
+## Cấu trúc dự án
+
+```
+app.py                  Điểm bắt đầu: chia trang khách xem / trang quản lý (có mật khẩu)
+csdl.py                 Kết nối database, hai hàm doc() và ghi()
+tien_ich.py             Hàm dùng chung: định dạng giá, nén ảnh, hoa hồng, tìm tọa độ
+trang/
+  tim_can.py            Bộ lọc + bản đồ + giỏ hàng + tạo link
+  can_ho.py             Thêm căn kèm ảnh, cập nhật trạng thái, cảnh báo căn lâu chưa xác nhận
+  toa_nha.py            Thêm tòa nhà, ghim vị trí trên bản đồ
+  lien_he.py            Chủ nhà, quản lý, trung gian
+  gio_hang.py           Xem lại các giỏ đã gửi khách
+  khach_xem.py          Trang khách mở từ link (không lộ thông tin chủ, số căn, hoa hồng)
+sql/
+  01_bang_co_ban.sql    Bảng khu vực, liên hệ, tòa nhà
+  02_can_ho_gio_hang.sql Bảng căn hộ, ảnh, lịch sử trạng thái, khách, giỏ hàng + VIEW v_can_ho
+  03_bao_mat.sql        Khoá bảng trên Supabase, đặt giờ Việt Nam
+  du_lieu_mau.sql       Dữ liệu giả để chạy thử trên máy (KHÔNG chạy trên database thật)
+tests/                  Kiểm thử các hàm trong tien_ich.py
+```
+
+## Đưa web lên mạng
+
+### 1. Tạo database trên Supabase
+
+1. Đăng ký tài khoản miễn phí tại https://supabase.com, bấm **New project**, chọn vùng **Singapore**
+   (gần Việt Nam nhất). Ghi lại mật khẩu database.
+2. Vào **SQL Editor**, lần lượt dán nội dung và bấm **Run** cho từng file theo đúng thứ tự:
+   `01_bang_co_ban.sql` → `02_can_ho_gio_hang.sql` → `03_bao_mat.sql`.
+3. Bấm nút **Connect** ở đầu trang, chọn **Session pooler**, copy chuỗi kết nối và thay
+   `[YOUR-PASSWORD]` bằng mật khẩu database.
+
+### 2. Đưa web lên Streamlit Cloud
+
+1. Vào https://share.streamlit.io, đăng nhập bằng GitHub, bấm **Create app**.
+2. Chọn repo `danang_rental`, nhánh `main`, file `app.py`.
+3. Mở **Advanced settings → Secrets**, dán nội dung theo mẫu `.streamlit/secrets.toml.example`
+   (chuỗi kết nối Supabase, mật khẩu quản lý, số Zalo).
+4. Bấm **Deploy**.
+
+## Chạy thử trên máy
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt pytest
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # rồi điền thông tin thật
+streamlit run app.py
+pytest                                                       # chạy kiểm thử
+```
+
