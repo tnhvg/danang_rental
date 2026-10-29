@@ -89,8 +89,10 @@ tests/                  Kiểm thử các hàm trong tien_ich.py
    (gần Việt Nam nhất). Ghi lại mật khẩu database.
 2. Vào **SQL Editor**, lần lượt dán nội dung và bấm **Run** cho từng file theo đúng thứ tự:
    `01_bang_co_ban.sql` → `02_can_ho_gio_hang.sql` → `03_bao_mat.sql`.
-3. Bấm nút **Connect** ở đầu trang, chọn **Session pooler**, copy chuỗi kết nối và thay
-   `[YOUR-PASSWORD]` bằng mật khẩu database.
+3. Bấm nút **Connect** ở đầu trang, chọn ô **Direct · Connection string**, chọn kiểu kết nối
+   **Session pooler**, copy chuỗi kết nối và thay `[YOUR-PASSWORD]` bằng mật khẩu database.
+   Phải dùng Session pooler vì kết nối trực tiếp của gói miễn phí chỉ hỗ trợ IPv6,
+   còn Streamlit Cloud chỉ dùng IPv4.
 
 ### 2. Đưa web lên Streamlit Cloud
 
