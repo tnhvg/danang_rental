@@ -68,7 +68,8 @@ csdl.py                 Kết nối database, hai hàm doc() và ghi()
 tien_ich.py             Hàm dùng chung: định dạng giá, nén ảnh, hoa hồng, tìm tọa độ
 trang/
   tim_can.py            Bộ lọc + bản đồ + giỏ hàng + tạo link
-  can_ho.py             Thêm căn kèm ảnh, cập nhật trạng thái, cảnh báo căn lâu chưa xác nhận
+  them_can_ho.py        Thêm căn kèm ảnh (ảnh tự nén)
+  cap_nhat_can_ho.py    Đổi trạng thái, giá; cảnh báo căn lâu chưa xác nhận
   toa_nha.py            Thêm tòa nhà, ghim vị trí trên bản đồ
   lien_he.py            Chủ nhà, quản lý, trung gian
   gio_hang.py           Xem lại các giỏ đã gửi khách
@@ -101,6 +102,11 @@ tests/                  Kiểm thử các hàm trong tien_ich.py
 3. Mở **Advanced settings → Secrets**, dán nội dung theo mẫu `.streamlit/secrets.toml.example`
    (chuỗi kết nối Supabase, mật khẩu quản lý, số Zalo).
 4. Bấm **Deploy**.
+
+## Lần đầu sử dụng
+
+Nhập theo thứ tự: **Liên hệ** (ai gửi căn) → **Tòa nhà** (căn nằm ở đâu) → **Thêm căn hộ**.
+Mỗi căn hộ phải trỏ tới một tòa nhà và một liên hệ đã có sẵn (foreign key).
 
 ## Chạy thử trên máy
 

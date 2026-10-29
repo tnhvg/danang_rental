@@ -16,7 +16,11 @@ def _chuoi_ket_noi() -> str:
     try:
         return st.secrets["DATABASE_URL"]
     except (KeyError, FileNotFoundError):
+        pass
+    if "DATABASE_URL" in os.environ:
         return os.environ["DATABASE_URL"]
+    st.error("Chưa cài **DATABASE_URL** (chuỗi kết nối Supabase) trong mục Secrets.")
+    st.stop()
 
 
 def _ket_noi():

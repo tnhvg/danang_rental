@@ -22,6 +22,13 @@ can_ho = doc("""
     ORDER BY gia_thue
 """)
 
+if not can_ho:
+    st.info("Chưa có căn nào còn trống. Lần đầu dùng, bạn nhập theo thứ tự:")
+    st.page_link("trang/lien_he.py", label="Bước 1: Thêm liên hệ (ai gửi căn cho bạn)", icon="📇")
+    st.page_link("trang/toa_nha.py", label="Bước 2: Thêm tòa nhà (căn nằm ở đâu)", icon="🏢")
+    st.page_link("trang/them_can_ho.py", label="Bước 3: Thêm căn hộ", icon="➕")
+    st.stop()
+
 with st.sidebar:
     st.header("Nhu cầu của khách")
     khu = st.multiselect("Khu vực", sorted({c["khu_vuc"] for c in can_ho}))

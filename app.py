@@ -17,7 +17,12 @@ def _mat_khau_dung() -> str:
     try:
         return st.secrets["MAT_KHAU"]
     except (KeyError, FileNotFoundError):
+        pass
+    if "MAT_KHAU" in os.environ:
         return os.environ["MAT_KHAU"]
+    st.error("Chưa cài **MAT_KHAU** trong mục Secrets. Vào Manage app → Settings → Secrets để thêm, "
+             "theo mẫu trong file `.streamlit/secrets.toml.example`.")
+    st.stop()
 
 
 def da_dang_nhap() -> bool:
@@ -47,7 +52,8 @@ if not da_dang_nhap():
 
 trang = st.navigation([
     st.Page("trang/tim_can.py", title="Tìm căn & tạo giỏ", icon="🗺️", default=True),
-    st.Page("trang/can_ho.py", title="Căn hộ", icon="🏠"),
+    st.Page("trang/them_can_ho.py", title="Thêm căn hộ", icon="➕"),
+    st.Page("trang/cap_nhat_can_ho.py", title="Cập nhật căn hộ", icon="🔄"),
     st.Page("trang/toa_nha.py", title="Tòa nhà", icon="🏢"),
     st.Page("trang/lien_he.py", title="Liên hệ", icon="📇"),
     st.Page("trang/gio_hang.py", title="Giỏ đã gửi", icon="🧺"),
