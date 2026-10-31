@@ -54,13 +54,15 @@ def hien_gio_hang(ma_link: str) -> None:
     ban_do = folium.Map(location=[16.054, 108.225], zoom_start=13)
     diem = []
     for c in can_ho:
+        if c["vi_do"] is None:
+            continue
         vi_tri = vi_tri_gan_dung(c["toa_nha_id"], c["vi_do"], c["kinh_do"])
         diem.append(vi_tri)
         folium.Circle(vi_tri, radius=BAN_KINH_M, color="#2563eb", fill=True, fill_opacity=0.2,
                       tooltip=f"Căn #{c['id']} · {dinh_dang_gia(c['gia_thue'])}").add_to(ban_do)
-    if diem:
+    if diem:  # không căn nào có vị trí thì bỏ hẳn bản đồ
         ban_do.fit_bounds(diem, max_zoom=15)
-    st_folium(ban_do, height=380, use_container_width=True, returned_objects=[], key="ban_do_khach")
+        st_folium(ban_do, height=380, use_container_width=True, returned_objects=[], key="ban_do_khach")
 
     for c in can_ho:
         con_hieu_luc = c["trang_thai_hom_nay"] in ("còn trống", "sắp trống")

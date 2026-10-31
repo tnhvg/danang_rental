@@ -23,10 +23,8 @@ can_ho = doc("""
 """)
 
 if not can_ho:
-    st.info("Chưa có căn nào còn trống. Lần đầu dùng, bạn nhập theo thứ tự:")
-    st.page_link("trang/lien_he.py", label="Bước 1: Thêm liên hệ (ai gửi căn cho bạn)", icon="📇")
-    st.page_link("trang/toa_nha.py", label="Bước 2: Thêm tòa nhà (căn nằm ở đâu)", icon="🏢")
-    st.page_link("trang/them_can_ho.py", label="Bước 3: Thêm căn hộ", icon="➕")
+    st.info("Chưa có căn nào còn trống.")
+    st.page_link("trang/them_can_ho.py", label="Thêm căn hộ", icon="➕")
     st.stop()
 
 with st.sidebar:
@@ -75,6 +73,8 @@ for c in ket_qua:
 ban_do = folium.Map(location=TAM_DA_NANG, zoom_start=13)
 for cac_can in theo_toa.values():
     dau = cac_can[0]
+    if dau["vi_do"] is None:  # địa chỉ chưa ghim vị trí: không vẽ được, chỉ hiện trong bảng
+        continue
     co_can_trong = any(c["trang_thai_hom_nay"] == "còn trống" for c in cac_can)
     noi_dung = "<br>".join(
         f"#{c['id']} · {'Studio' if c['so_phong_ngu'] == 0 else str(c['so_phong_ngu']) + ' PN'}"
@@ -89,10 +89,14 @@ for cac_can in theo_toa.values():
         icon=folium.Icon(color=MAU_TRANG_THAI["còn trống" if co_can_trong else "sắp trống"], icon="home"),
     ).add_to(ban_do)
 
-if theo_toa:
-    ban_do.fit_bounds([[float(c["vi_do"]), float(c["kinh_do"])] for c in ket_qua], max_zoom=16)
+co_vi_tri = [[float(c["vi_do"]), float(c["kinh_do"])] for c in ket_qua if c["vi_do"] is not None]
+if co_vi_tri:
+    ban_do.fit_bounds(co_vi_tri, max_zoom=16)
 st_folium(ban_do, height=450, use_container_width=True, returned_objects=[], key="ban_do_tim_can")
 st.caption("🟢 có căn còn trống · 🟠 chỉ có căn sắp trống. Số # trên bản đồ là mã căn trong bảng dưới.")
+if len(co_vi_tri) < len(ket_qua):
+    st.caption(f"📍 {len(ket_qua) - len(co_vi_tri)} căn chưa có vị trí nên không hiện trên bản đồ "
+               "(vẫn có trong bảng). Ghim vị trí ở trang **Vị trí trên bản đồ**.")
 
 # --------------------------------------------------------- Bảng kết quả + chọn
 bang = [{

@@ -50,12 +50,18 @@ if ma_gio:
 if not da_dang_nhap():
     st.stop()
 
-trang = st.navigation([
-    st.Page("trang/tim_can.py", title="Tìm căn & tạo giỏ", icon="🗺️", default=True),
-    st.Page("trang/them_can_ho.py", title="Thêm căn hộ", icon="➕"),
-    st.Page("trang/cap_nhat_can_ho.py", title="Cập nhật căn hộ", icon="🔄"),
-    st.Page("trang/toa_nha.py", title="Tòa nhà", icon="🏢"),
-    st.Page("trang/lien_he.py", title="Liên hệ", icon="📇"),
-    st.Page("trang/gio_hang.py", title="Giỏ đã gửi", icon="🧺"),
-])
+trang = st.navigation({
+    "Căn hộ": [
+        st.Page("trang/them_can_ho.py", title="Thêm căn hộ", icon="➕", default=True),
+        st.Page("trang/danh_sach_can_ho.py", title="Danh sách căn hộ", icon="📋"),
+    ],
+    "Tư vấn khách": [
+        st.Page("trang/tim_can.py", title="Tìm căn trên bản đồ & tạo giỏ", icon="🗺️"),
+        st.Page("trang/gio_hang.py", title="Giỏ đã gửi khách", icon="🧺"),
+    ],
+    "Khác": [
+        st.Page("trang/toa_nha.py", title="Vị trí trên bản đồ", icon="📍"),
+        st.Page("trang/lien_he.py", title="Người gửi căn", icon="📇"),
+    ],
+})
 trang.run()

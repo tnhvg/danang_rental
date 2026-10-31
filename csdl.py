@@ -6,6 +6,7 @@ nên muốn đổi cách kết nối chỉ cần sửa một file này.
 
 import os
 import re
+from pathlib import Path
 
 import psycopg
 import streamlit as st
@@ -56,14 +57,26 @@ LOI_KET_NOI = [
 ]
 
 
+# Các file SQL web tự chạy khi khởi động, để không phải vào Supabase chạy tay
+FILE_CAP_NHAT = [Path(__file__).parent / "sql" / "04_don_gian_hoa.sql"]
+_da_cap_nhat_cau_truc = False
+
+
 def _ket_noi():
+    global _da_cap_nhat_cau_truc
     # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối
     # (pooler) của Supabase không hỗ trợ.
     chuoi = _chuoi_ket_noi()
     try:
         # Spinner chỉ hiện nếu kết nối lâu hơn nửa giây, nên bình thường không thấy
         with st.spinner("Đang kết nối database..."):
-            return psycopg.connect(chuoi, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
+            kn = psycopg.connect(chuoi, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
+            if not _da_cap_nhat_cau_truc:
+                for tep in FILE_CAP_NHAT:
+                    kn.execute(tep.read_text(encoding="utf-8"))
+                kn.commit()
+                _da_cap_nhat_cau_truc = True
+            return kn
     except psycopg.Error as loi:
         _dung_vi_loi(loi, chuoi)
 

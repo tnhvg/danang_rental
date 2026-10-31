@@ -4,7 +4,7 @@ import streamlit as st
 
 from csdl import doc, ghi
 
-st.title("📇 Liên hệ")
+st.title("📇 Người gửi căn")
 st.caption("Mỗi người chỉ nhập một lần. Người có vai trò 'trung gian' thì hoa hồng chia 50%.")
 
 with st.form("them_lien_he", clear_on_submit=True):
