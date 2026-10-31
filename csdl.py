@@ -36,6 +36,11 @@ LOI_KET_NOI = [
      "Direct connection: hãy chọn **Session pooler** (địa chỉ có chữ `pooler.supabase.com`)."),
     ("Network is unreachable",
      "Streamlit Cloud không tới được database. Hãy dùng chuỗi **Session pooler** thay cho Direct connection."),
+    ("connection timeout expired",
+     "Chờ 10 giây mà database **không trả lời**. Hai nguyên nhân hay gặp:\n"
+     "1. DATABASE_URL đang dùng **Direct connection**: trong Supabase bấm Connect → Direct → chọn "
+     "**Session pooler** rồi copy lại chuỗi (có chữ `pooler.supabase.com`).\n"
+     "2. Project Supabase **đang tạm dừng** (paused): vào supabase.com, mở project, bấm **Restore**."),
     ('missing "=" after',
      "DATABASE_URL **sai định dạng**. Chuỗi phải bắt đầu bằng `postgresql://` và nằm trong dấu ngoặc kép."),
 ]
@@ -44,9 +49,11 @@ LOI_KET_NOI = [
 def _ket_noi():
     # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối
     # (pooler) của Supabase không hỗ trợ.
+    chuoi = _chuoi_ket_noi()
     try:
-        return psycopg.connect(_chuoi_ket_noi(), row_factory=dict_row, prepare_threshold=None,
-                               connect_timeout=15)
+        # Spinner chỉ hiện nếu kết nối lâu hơn nửa giây, nên bình thường không thấy
+        with st.spinner("Đang kết nối database..."):
+            return psycopg.connect(chuoi, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
     except psycopg.Error as loi:
         _dung_vi_loi(loi)
 
