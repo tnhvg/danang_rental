@@ -37,8 +37,9 @@ Chủ báo đã cọc
 
 ## Phiên bản 1 (MVP: phiên bản đơn giản nhất dùng được)
 
-- [x] Thêm tòa nhà: nhập địa chỉ, web tìm vị trí, tôi kiểm tra và kéo chấm về đúng chỗ
-- [x] Thêm căn hộ: form nhập đặc điểm, tải ảnh, chọn trạng thái
+- [x] Thêm căn hộ trong một form: ảnh, địa chỉ, đặc điểm, giá, trạng thái, người gửi
+- [x] Xem lại danh sách căn kèm ảnh, tìm kiếm, cập nhật trạng thái
+- [x] Vị trí tự tìm từ địa chỉ, ghim tay khi tìm không ra
 - [x] Bản đồ hiển thị căn hộ, màu theo trạng thái
 - [x] Bộ lọc: tên đường, số phòng ngủ, khoảng giá, ngày dọn vào
 - [x] Giỏ hàng và link gửi khách (khách không thấy thông tin chủ nhà và hoa hồng)
@@ -67,17 +68,18 @@ app.py                  Điểm bắt đầu: chia trang khách xem / trang qu�
 csdl.py                 Kết nối database, hai hàm doc() và ghi()
 tien_ich.py             Hàm dùng chung: định dạng giá, nén ảnh, hoa hồng, tìm tọa độ
 trang/
+  them_can_ho.py        Một form duy nhất: ảnh + địa chỉ + thông tin căn + người gửi (không bắt buộc)
+  danh_sach_can_ho.py   Xem lại ảnh và thông tin mọi căn, tìm kiếm, đổi trạng thái, thêm ảnh
   tim_can.py            Bộ lọc + bản đồ + giỏ hàng + tạo link
-  them_can_ho.py        Thêm căn kèm ảnh (ảnh tự nén)
-  cap_nhat_can_ho.py    Đổi trạng thái, giá; cảnh báo căn lâu chưa xác nhận
-  toa_nha.py            Thêm tòa nhà, ghim vị trí trên bản đồ
-  lien_he.py            Chủ nhà, quản lý, trung gian
+  toa_nha.py            Ghim / sửa vị trí trên bản đồ cho địa chỉ web tự tìm chưa ra
+  lien_he.py            Danh sách người gửi căn (chủ nhà, quản lý, trung gian)
   gio_hang.py           Xem lại các giỏ đã gửi khách
   khach_xem.py          Trang khách mở từ link (không lộ thông tin chủ, số căn, hoa hồng)
 sql/
   01_bang_co_ban.sql    Bảng khu vực, liên hệ, tòa nhà
   02_can_ho_gio_hang.sql Bảng căn hộ, ảnh, lịch sử trạng thái, khách, giỏ hàng + VIEW v_can_ho
   03_bao_mat.sql        Khoá bảng trên Supabase, đặt giờ Việt Nam
+  04_don_gian_hoa.sql   Cho phép lưu căn chưa có vị trí / người gửi (web TỰ chạy khi khởi động)
   du_lieu_mau.sql       Dữ liệu giả để chạy thử trên máy (KHÔNG chạy trên database thật)
 tests/                  Kiểm thử các hàm trong tien_ich.py
 ```
@@ -105,8 +107,11 @@ tests/                  Kiểm thử các hàm trong tien_ich.py
 
 ## Lần đầu sử dụng
 
-Nhập theo thứ tự: **Liên hệ** (ai gửi căn) → **Tòa nhà** (căn nằm ở đâu) → **Thêm căn hộ**.
-Mỗi căn hộ phải trỏ tới một tòa nhà và một liên hệ đã có sẵn (foreign key).
+Vào **➕ Thêm căn hộ**, tải ảnh, điền địa chỉ và giá, bấm **Lưu**. Không cần tạo gì trước.
+
+Phía sau, web tự tìm tòa nhà cùng địa chỉ (chưa có thì tạo mới) và người gửi cùng số điện thoại
+(chưa có thì tạo mới), nên dữ liệu vẫn gọn trong các bảng riêng để lọc và phân tích.
+Vị trí trên bản đồ được tự tìm từ địa chỉ; tìm không ra thì ghim tay ở trang **📍 Vị trí trên bản đồ**.
 
 ## Chạy thử trên máy
 
