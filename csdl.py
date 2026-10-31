@@ -16,13 +16,18 @@ from psycopg.rows import dict_row
 def _chuoi_ket_noi() -> str:
     # Trên Streamlit Cloud: lấy từ mục Secrets. Trên máy: lấy từ biến môi trường.
     try:
-        return st.secrets["DATABASE_URL"]
+        chuoi = st.secrets["DATABASE_URL"]
     except (KeyError, FileNotFoundError):
-        pass
-    if "DATABASE_URL" in os.environ:
-        return os.environ["DATABASE_URL"]
-    st.error("Chưa cài **DATABASE_URL** (chuỗi kết nối Supabase) trong mục Secrets.")
-    st.stop()
+        chuoi = os.environ.get("DATABASE_URL")
+    if not chuoi:
+        st.error("Chưa cài **DATABASE_URL** (chuỗi kết nối Supabase) trong mục Secrets.")
+        st.stop()
+    if "xxxx" in chuoi or "MAT_KHAU_DATABASE" in chuoi or "[YOUR-PASSWORD]" in chuoi:
+        st.error("DATABASE_URL vẫn còn **phần giữ chỗ** (`xxxx`, `MAT_KHAU_DATABASE` hoặc `[YOUR-PASSWORD]`). "
+                 "Vào Supabase → Connect → Direct → Session pooler, copy nguyên chuỗi thật, "
+                 "rồi thay `[YOUR-PASSWORD]` bằng mật khẩu database.")
+        st.stop()
+    return chuoi
 
 
 # Lỗi kết nối hay gặp: (đoạn chữ trong lỗi gốc, giải thích và cách sửa)
@@ -31,8 +36,11 @@ LOI_KET_NOI = [
      "Sai **mật khẩu database** trong DATABASE_URL. Kiểm tra lại phần mật khẩu, nhớ bỏ dấu `[ ]`. "
      "Quên mật khẩu thì vào Supabase → Project Settings → Database → Reset database password."),
     ("Tenant or user not found",
-     "Sai **tên người dùng** trong DATABASE_URL. Với Session pooler, tên phải có dạng `postgres.xxxx` "
-     "(có dấu chấm và mã project), hãy copy lại nguyên chuỗi từ Supabase."),
+     "Sai **tên người dùng** trong DATABASE_URL. Với Session pooler, tên phải có dạng `postgres.` + mã "
+     "project, hãy copy lại nguyên chuỗi từ Supabase (Connect → Direct → Session pooler)."),
+    ("tenant/user",  # câu chữ mới của Supabase: "(ENOTFOUND) tenant/user ... not found"
+     "Sai **tên người dùng** trong DATABASE_URL. Với Session pooler, tên phải có dạng `postgres.` + mã "
+     "project, hãy copy lại nguyên chuỗi từ Supabase (Connect → Direct → Session pooler)."),
     ("failed to resolve host",
      "Sai **địa chỉ máy chủ** trong DATABASE_URL. Nếu chuỗi có `db.xxxx.supabase.co` thì bạn đang dùng "
      "Direct connection: hãy chọn **Session pooler** (địa chỉ có chữ `pooler.supabase.com`)."),
