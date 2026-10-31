@@ -23,20 +23,62 @@ def _chuoi_ket_noi() -> str:
     st.stop()
 
 
+# Lỗi kết nối hay gặp: (đoạn chữ trong lỗi gốc, giải thích và cách sửa)
+LOI_KET_NOI = [
+    ("password authentication failed",
+     "Sai **mật khẩu database** trong DATABASE_URL. Kiểm tra lại phần mật khẩu, nhớ bỏ dấu `[ ]`. "
+     "Quên mật khẩu thì vào Supabase → Project Settings → Database → Reset database password."),
+    ("Tenant or user not found",
+     "Sai **tên người dùng** trong DATABASE_URL. Với Session pooler, tên phải có dạng `postgres.xxxx` "
+     "(có dấu chấm và mã project), hãy copy lại nguyên chuỗi từ Supabase."),
+    ("failed to resolve host",
+     "Sai **địa chỉ máy chủ** trong DATABASE_URL. Nếu chuỗi có `db.xxxx.supabase.co` thì bạn đang dùng "
+     "Direct connection: hãy chọn **Session pooler** (địa chỉ có chữ `pooler.supabase.com`)."),
+    ("Network is unreachable",
+     "Streamlit Cloud không tới được database. Hãy dùng chuỗi **Session pooler** thay cho Direct connection."),
+    ('missing "=" after',
+     "DATABASE_URL **sai định dạng**. Chuỗi phải bắt đầu bằng `postgresql://` và nằm trong dấu ngoặc kép."),
+]
+
+
 def _ket_noi():
     # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối
     # (pooler) của Supabase không hỗ trợ.
-    return psycopg.connect(_chuoi_ket_noi(), row_factory=dict_row, prepare_threshold=None)
+    try:
+        return psycopg.connect(_chuoi_ket_noi(), row_factory=dict_row, prepare_threshold=None,
+                               connect_timeout=15)
+    except psycopg.Error as loi:
+        _dung_vi_loi(loi)
+
+
+def _dung_vi_loi(loi: Exception):
+    """Đổi lỗi kỹ thuật thành lời giải thích tiếng Việt rồi dừng trang."""
+    if isinstance(loi, psycopg.errors.UndefinedTable):
+        st.error("Database **chưa có bảng**. Vào Supabase → SQL Editor, chạy lần lượt 3 file "
+                 "`sql/01_bang_co_ban.sql`, `sql/02_can_ho_gio_hang.sql`, `sql/03_bao_mat.sql`.")
+        st.stop()
+    goc = str(loi)
+    for doan_chu, giai_thich in LOI_KET_NOI:
+        if doan_chu in goc:
+            st.error(giai_thich)
+            st.stop()
+    raise loi  # lỗi lạ: để Streamlit hiện chi tiết, chụp màn hình gửi người viết code
 
 
 def doc(sql: str, tham_so=None) -> list[dict]:
     """Chạy câu SELECT, trả về danh sách các dòng. Mỗi dòng là một dict {tên cột: giá trị}."""
     with _ket_noi() as kn:
-        return kn.execute(sql, tham_so).fetchall()
+        try:
+            return kn.execute(sql, tham_so).fetchall()
+        except psycopg.errors.UndefinedTable as loi:
+            _dung_vi_loi(loi)
 
 
 def ghi(sql: str, tham_so=None) -> dict | None:
     """Chạy INSERT/UPDATE/DELETE. Nếu câu lệnh có RETURNING thì trả về dòng đầu tiên."""
     with _ket_noi() as kn:
-        con_tro = kn.execute(sql, tham_so)
+        try:
+            con_tro = kn.execute(sql, tham_so)
+        except psycopg.errors.UndefinedTable as loi:
+            _dung_vi_loi(loi)
         return con_tro.fetchone() if con_tro.description else None
