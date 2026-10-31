@@ -5,9 +5,11 @@ nên muốn đổi cách kết nối chỉ cần sửa một file này.
 """
 
 import os
+import re
 
 import psycopg
 import streamlit as st
+from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
 
 
@@ -36,6 +38,11 @@ LOI_KET_NOI = [
      "Direct connection: hãy chọn **Session pooler** (địa chỉ có chữ `pooler.supabase.com`)."),
     ("Network is unreachable",
      "Streamlit Cloud không tới được database. Hãy dùng chuỗi **Session pooler** thay cho Direct connection."),
+    ("connection timeout expired",
+     "Chờ 10 giây mà database **không trả lời**. Hai nguyên nhân hay gặp:\n"
+     "1. DATABASE_URL đang dùng **Direct connection**: trong Supabase bấm Connect → Direct → chọn "
+     "**Session pooler** rồi copy lại chuỗi (có chữ `pooler.supabase.com`).\n"
+     "2. Project Supabase **đang tạm dừng** (paused): vào supabase.com, mở project, bấm **Restore**."),
     ('missing "=" after',
      "DATABASE_URL **sai định dạng**. Chuỗi phải bắt đầu bằng `postgresql://` và nằm trong dấu ngoặc kép."),
 ]
@@ -44,14 +51,28 @@ LOI_KET_NOI = [
 def _ket_noi():
     # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối
     # (pooler) của Supabase không hỗ trợ.
+    chuoi = _chuoi_ket_noi()
     try:
-        return psycopg.connect(_chuoi_ket_noi(), row_factory=dict_row, prepare_threshold=None,
-                               connect_timeout=15)
+        # Spinner chỉ hiện nếu kết nối lâu hơn nửa giây, nên bình thường không thấy
+        with st.spinner("Đang kết nối database..."):
+            return psycopg.connect(chuoi, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
     except psycopg.Error as loi:
-        _dung_vi_loi(loi)
+        _dung_vi_loi(loi, chuoi)
 
 
-def _dung_vi_loi(loi: Exception):
+def _an_mat_khau(van_ban: str, chuoi: str) -> str:
+    """Xoá mật khẩu khỏi nội dung lỗi trước khi hiện lên màn hình."""
+    try:
+        mat_khau = conninfo_to_dict(chuoi).get("password")
+    except psycopg.Error:
+        mat_khau = None
+    if mat_khau:
+        van_ban = van_ban.replace(mat_khau, "***")
+    # Phòng trường hợp chuỗi sai định dạng: che phần giữa "://tên:" và "@"
+    return re.sub(r'(//[^:/@\s"]+:)[^@\s"]+@', r"\1***@", van_ban)
+
+
+def _dung_vi_loi(loi: Exception, chuoi: str = ""):
     """Đổi lỗi kỹ thuật thành lời giải thích tiếng Việt rồi dừng trang."""
     if isinstance(loi, psycopg.errors.UndefinedTable):
         st.error("Database **chưa có bảng**. Vào Supabase → SQL Editor, chạy lần lượt 3 file "
@@ -62,7 +83,10 @@ def _dung_vi_loi(loi: Exception):
         if doan_chu in goc:
             st.error(giai_thich)
             st.stop()
-    raise loi  # lỗi lạ: để Streamlit hiện chi tiết, chụp màn hình gửi người viết code
+    # Lỗi chưa có trong danh sách: hiện nội dung gốc (đã che mật khẩu) để chụp màn hình gửi đi
+    st.error("Không kết nối được database. Chụp màn hình phần chi tiết bên dưới gửi người viết code.")
+    st.code(f"{type(loi).__name__}: {_an_mat_khau(goc, chuoi)}", language=None)
+    st.stop()
 
 
 def doc(sql: str, tham_so=None) -> list[dict]:
