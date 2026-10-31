@@ -6,12 +6,15 @@ nên muốn đổi cách kết nối chỉ cần sửa một file này.
 
 import os
 import re
+import time
 from pathlib import Path
 
 import psycopg
 import streamlit as st
 from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
+
+THOI_DIEM_NAP = time.time()  # app.py dùng để biết file này có bị sửa sau khi nạp không
 
 
 def _chuoi_ket_noi() -> str:
@@ -58,7 +61,7 @@ LOI_KET_NOI = [
 
 
 # Các file SQL web tự chạy khi khởi động, để không phải vào Supabase chạy tay
-FILE_CAP_NHAT = [Path(__file__).parent / "sql" / "04_don_gian_hoa.sql"]
+FILE_CAP_NHAT = [Path(__file__).parent / "sql" / ten for ten in ("04_don_gian_hoa.sql", "05_mo_ta_tieng_anh.sql")]
 _da_cap_nhat_cau_truc = False
 
 

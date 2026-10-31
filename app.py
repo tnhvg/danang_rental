@@ -6,11 +6,22 @@ Web có hai phần:
 """
 
 import hmac
+import importlib
 import os
+import sys
+from pathlib import Path
 
 import streamlit as st
 
-st.set_page_config(page_title="Căn hộ Đà Nẵng", page_icon="🏠", layout="wide")
+st.set_page_config(page_title="Da Nang Apartments", page_icon="🏠", layout="wide")
+
+# Khi gộp code mới, Streamlit Cloud tải lại các trang nhưng có thể vẫn giữ BẢN CŨ của các file
+# được import (csdl.py, tien_ich.py, trang/khach_xem.py) trong bộ nhớ. File nào trên ổ đĩa
+# mới hơn lúc được nạp thì nạp lại. Thứ tự quan trọng: khach_xem dùng csdl và tien_ich.
+for _ten in ("csdl", "tien_ich", "trang.khach_xem"):
+    _mod = sys.modules.get(_ten)
+    if _mod and Path(_mod.__file__).stat().st_mtime > getattr(_mod, "THOI_DIEM_NAP", 0):
+        importlib.reload(_mod)
 
 
 def _mat_khau_dung() -> str:
