@@ -19,7 +19,8 @@ if not hien_ca_da_thue:
     dieu_kien.append("trang_thai_hom_nay IN ('còn trống', 'sắp trống')")
 if tu_khoa.strip():
     # ILIKE: tìm không phân biệt chữ hoa chữ thường; % nghĩa là "bất kỳ chữ nào trước/sau"
-    dieu_kien.append("""concat_ws(' ', ten_duong, ten_toa, ma_can, khu_vuc, mo_ta, ghi_chu_noi_bo, ten_lien_he)
+    dieu_kien.append("""concat_ws(' ', ten_duong, ten_toa, ma_can, khu_vuc, mo_ta, mo_ta_en, ghi_chu_noi_bo,
+                                  ten_lien_he)
                         ILIKE %s""")
     tham_so.append(f"%{tu_khoa.strip()}%")
 can_ho = doc(f"""
@@ -107,6 +108,8 @@ with cot_thong_tin:
     st.write(" · ".join(d for d in dac_diem if d))
     if can["mo_ta"]:
         st.write(f"**Mô tả:** {can['mo_ta']}")
+    if can["mo_ta_en"]:
+        st.write(f"**Mô tả tiếng Anh:** {can['mo_ta_en']}")
     if can["ghi_chu_noi_bo"]:
         st.write(f"**Ghi chú riêng:** {can['ghi_chu_noi_bo']}")
     if can["ten_lien_he"]:
@@ -119,13 +122,16 @@ with cot_thong_tin:
         trang_thai_moi = st.selectbox("Trạng thái", TRANG_THAI, index=TRANG_THAI.index(can["trang_thai"]))
         ngay_trong_moi = st.date_input("Ngày trống (nếu sắp trống)", value=can["ngay_trong"], format="DD/MM/YYYY")
         gia_moi = st.number_input("Giá (triệu/tháng)", 0.5, 500.0, can["gia_thue"] / 1_000_000, step=0.5)
+        mo_ta_moi = st.text_area("Mô tả (tiếng Việt)", value=can["mo_ta"] or "")
+        mo_ta_en_moi = st.text_area("Mô tả tiếng Anh", value=can["mo_ta_en"] or "")
         st.caption("Bấm Lưu nghĩa là bạn vừa hỏi chủ xong: ngày xác nhận được đặt lại thành hôm nay.")
         if st.form_submit_button("Lưu", type="primary"):
             if trang_thai_moi == "sắp trống" and not ngay_trong_moi:
                 st.error("Căn 'sắp trống' cần có ngày trống.")
             else:
-                ghi("""UPDATE can_ho SET trang_thai = %s, ngay_trong = %s, gia_thue = %s,
-                           ngay_xac_nhan = current_date WHERE id = %s""",
+                ghi("""UPDATE can_ho SET trang_thai = %s, ngay_trong = %s, gia_thue = %s, mo_ta = %s,
+                           mo_ta_en = %s, ngay_xac_nhan = current_date WHERE id = %s""",
                     (trang_thai_moi, ngay_trong_moi if trang_thai_moi == "sắp trống" else None,
-                     round(gia_moi * 1_000_000), can["id"]))
+                     round(gia_moi * 1_000_000), mo_ta_moi.strip() or None, mo_ta_en_moi.strip() or None,
+                     can["id"]))
                 st.rerun()

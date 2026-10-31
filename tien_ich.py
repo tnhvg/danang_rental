@@ -2,10 +2,13 @@
 
 import io
 import random
+import time
 from datetime import date
 
 import requests
 from PIL import Image, ImageOps
+
+THOI_DIEM_NAP = time.time()  # app.py dùng để biết file này có bị sửa sau khi nạp không
 
 TAM_DA_NANG = (16.054, 108.225)
 TY_LE_HOA_HONG = 0.083

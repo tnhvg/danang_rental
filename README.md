@@ -42,7 +42,8 @@ Chủ báo đã cọc
 - [x] Vị trí tự tìm từ địa chỉ, ghim tay khi tìm không ra
 - [x] Bản đồ hiển thị căn hộ, màu theo trạng thái
 - [x] Bộ lọc: tên đường, số phòng ngủ, khoảng giá, ngày dọn vào
-- [x] Giỏ hàng và link gửi khách (khách không thấy thông tin chủ nhà và hoa hồng)
+- [x] Giỏ hàng và link gửi khách (khách không thấy số nhà, thông tin chủ nhà và hoa hồng)
+- [x] Trang khách xem mặc định tiếng Anh, có nút đổi sang tiếng Việt
 - [x] Trang quản lý có mật khẩu, chỉ tôi vào được
 
 ## Phiên bản sau
@@ -74,12 +75,13 @@ trang/
   toa_nha.py            Ghim / sửa vị trí trên bản đồ cho địa chỉ web tự tìm chưa ra
   lien_he.py            Danh sách người gửi căn (chủ nhà, quản lý, trung gian)
   gio_hang.py           Xem lại các giỏ đã gửi khách
-  khach_xem.py          Trang khách mở từ link (không lộ thông tin chủ, số căn, hoa hồng)
+  khach_xem.py          Trang khách mở từ link, tiếng Anh / tiếng Việt (không lộ số nhà, chủ, số căn, hoa hồng)
 sql/
   01_bang_co_ban.sql    Bảng khu vực, liên hệ, tòa nhà
   02_can_ho_gio_hang.sql Bảng căn hộ, ảnh, lịch sử trạng thái, khách, giỏ hàng + VIEW v_can_ho
   03_bao_mat.sql        Khoá bảng trên Supabase, đặt giờ Việt Nam
   04_don_gian_hoa.sql   Cho phép lưu căn chưa có vị trí / người gửi (web TỰ chạy khi khởi động)
+  05_mo_ta_tieng_anh.sql Thêm cột mô tả tiếng Anh (web TỰ chạy khi khởi động)
   du_lieu_mau.sql       Dữ liệu giả để chạy thử trên máy (KHÔNG chạy trên database thật)
 tests/                  Kiểm thử các hàm trong tien_ich.py
 ```
@@ -112,6 +114,11 @@ Vào **➕ Thêm căn hộ**, tải ảnh, điền địa chỉ và giá, bấm 
 Phía sau, web tự tìm tòa nhà cùng địa chỉ (chưa có thì tạo mới) và người gửi cùng số điện thoại
 (chưa có thì tạo mới), nên dữ liệu vẫn gọn trong các bảng riêng để lọc và phân tích.
 Vị trí trên bản đồ được tự tìm từ địa chỉ; tìm không ra thì ghim tay ở trang **📍 Vị trí trên bản đồ**.
+
+## Khi web lỗi sau lúc gộp code mới
+
+Web tự nạp lại các file đã đổi, nhưng nếu vẫn gặp lỗi lạ ngay sau khi gộp pull request:
+mở web → **Manage app** (góc dưới bên phải) → **⋮** → **Reboot app**.
 
 ## Chạy thử trên máy
 

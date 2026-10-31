@@ -101,7 +101,11 @@ with st.form("them_can_ho", clear_on_submit=True):
     gym = c3.checkbox("Gym")
     cho_de_o_to = c4.checkbox("Chỗ để ô tô")
 
-    mo_ta = st.text_area("Mô tả cho khách đọc", placeholder="Ví dụ: gần biển Mỹ Khê 300m, yên tĩnh, có bếp riêng")
+    c1, c2 = st.columns(2)
+    mo_ta = c1.text_area("Mô tả cho khách đọc (tiếng Việt)",
+                         placeholder="Ví dụ: gần biển Mỹ Khê 300m, yên tĩnh, có bếp riêng")
+    mo_ta_en = c2.text_area("Mô tả tiếng Anh (cho khách nước ngoài)",
+                            placeholder="Ví dụ: 300m to My Khe beach, quiet, private kitchen")
     ghi_chu = st.text_area("Ghi chú riêng (khách không thấy)", placeholder="Ví dụ: chủ dễ thương lượng giá")
 
     st.subheader("👤 Ai gửi căn này (không bắt buộc)")
@@ -128,12 +132,14 @@ if luu:
             moi = ghi(
                 """INSERT INTO can_ho (toa_nha_id, lien_he_id, ma_can, so_phong_ngu, so_phong_tam, dien_tich,
                        tang, gia_thue, ban_cong, phong_tam_vach_kinh, bon_tam, may_giat_rieng,
-                       cho_nuoi_thu_cung, huong_view, noi_that, mo_ta, ghi_chu_noi_bo, trang_thai, ngay_trong)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       cho_nuoi_thu_cung, huong_view, noi_that, mo_ta, mo_ta_en, ghi_chu_noi_bo, trang_thai,
+                       ngay_trong)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                    RETURNING id""",
                 (toa_nha_id, lien_he_id, ma_can.strip() or None, so_phong_ngu, so_phong_tam, dien_tich or None,
                  tang or None, round(gia_trieu * 1_000_000), ban_cong, vach_kinh, bon_tam, may_giat, thu_cung,
-                 huong_view, noi_that, mo_ta.strip() or None, ghi_chu.strip() or None, trang_thai,
+                 huong_view, noi_that, mo_ta.strip() or None, mo_ta_en.strip() or None, ghi_chu.strip() or None,
+                 trang_thai,
                  ngay_trong if trang_thai == "sắp trống" else None),
             )
             for thu_tu, tep in enumerate(anh or []):
