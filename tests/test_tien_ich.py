@@ -2,7 +2,7 @@ import io
 
 from PIL import Image
 
-from tien_ich import dinh_dang_gia, hoa_hong, nen_anh, vi_tri_gan_dung
+from tien_ich import dinh_dang_gia, hoa_hong, nen_anh, thu_nho, vi_tri_gan_dung
 
 
 def test_dinh_dang_gia():
@@ -32,3 +32,10 @@ def test_vi_tri_gan_dung_on_dinh_va_khong_qua_xa():
     assert lan_1 == lan_2  # cùng tòa luôn dời giống nhau
     assert lan_1 != (16.05, 108.24)  # nhưng không trùng vị trí thật
     assert abs(lan_1[0] - 16.05) < 0.002 and abs(lan_1[1] - 108.24) < 0.002
+
+
+def test_thu_nho_dung_ti_le_4_3():
+    for kich_thuoc in [(4000, 3000), (1080, 1920), (2000, 500)]:  # ảnh ngang, ảnh dọc, ảnh rất dẹt
+        goc = io.BytesIO()
+        Image.new("RGB", kich_thuoc, "red").save(goc, format="JPEG")
+        assert Image.open(io.BytesIO(thu_nho(goc.getvalue()))).size == (480, 360)

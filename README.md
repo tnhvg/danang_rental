@@ -67,10 +67,11 @@ Chủ báo đã cọc
 ```
 app.py                  Điểm bắt đầu: chia trang khách xem / trang quản lý (có mật khẩu)
 csdl.py                 Kết nối database, hai hàm doc() và ghi()
-tien_ich.py             Hàm dùng chung: định dạng giá, nén ảnh, hoa hồng, tìm tọa độ
+tien_ich.py             Hàm dùng chung: định dạng giá, nén ảnh, ảnh bìa nhỏ, hoa hồng, tìm tọa độ
+giao_dien.py            Trình xem ảnh: chọn từng ảnh, phóng to (dùng cho trang quản lý và trang khách)
 trang/
   them_can_ho.py        Một form duy nhất: ảnh + địa chỉ + thông tin căn + người gửi (không bắt buộc)
-  danh_sach_can_ho.py   Xem lại ảnh và thông tin mọi căn, tìm kiếm, đổi trạng thái, thêm ảnh
+  danh_sach_can_ho.py   Danh sách dạng thẻ có ảnh bìa; chi tiết từng căn: xem từng ảnh, đổi trạng thái, thêm ảnh
   tim_can.py            Bộ lọc + bản đồ + giỏ hàng + tạo link
   toa_nha.py            Ghim / sửa vị trí trên bản đồ cho địa chỉ web tự tìm chưa ra
   lien_he.py            Danh sách người gửi căn (chủ nhà, quản lý, trung gian)
