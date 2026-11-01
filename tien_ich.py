@@ -44,6 +44,14 @@ def nen_anh(du_lieu: bytes, canh_dai_nhat: int = 1280, chat_luong: int = 75) -> 
     return dau_ra.getvalue()
 
 
+def thu_nho(du_lieu: bytes, rong: int = 480, cao: int = 360) -> bytes:
+    """Ảnh bìa nhỏ cho thẻ trong danh sách: cắt giữa về đúng tỉ lệ 4:3 để các thẻ cao bằng nhau."""
+    anh = ImageOps.fit(Image.open(io.BytesIO(du_lieu)).convert("RGB"), (rong, cao))
+    dau_ra = io.BytesIO()
+    anh.save(dau_ra, format="JPEG", quality=80)
+    return dau_ra.getvalue()
+
+
 def vi_tri_gan_dung(toa_nha_id: int, vi_do: float, kinh_do: float) -> tuple[float, float]:
     """Dời vị trí đi tối đa khoảng 150 m để khách không biết chính xác tòa nào.
 

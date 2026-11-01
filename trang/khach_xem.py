@@ -12,6 +12,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from csdl import doc
+from giao_dien import xem_anh
 from tien_ich import vi_tri_gan_dung
 
 THOI_DIEM_NAP = time.time()  # app.py dùng để biết file này có bị sửa sau khi nạp không
@@ -39,7 +40,6 @@ CHU = {
     "con_trong": {"en": "Available now", "vi": "Còn trống"},
     "trong_tu": {"en": "Available from {ngay}", "vi": "Trống từ {ngay}"},
     "da_thue": {"en": "Already rented", "vi": "Đã có người thuê"},
-    "them_anh": {"en": "See {n} more photos", "vi": "Xem thêm {n} ảnh"},
     "phong_tam": {"en": "{n} bathroom(s)", "vi": "{n} phòng tắm"},
     "tang": {"en": "floor {n}", "vi": "tầng {n}"},
     "toa_co": {"en": "Building amenities: ", "vi": "Tòa nhà có: "},
@@ -140,11 +140,7 @@ def hien_gio_hang(ma_link: str) -> None:
             st.markdown(f":green[**{trang_thai}**] · {c['ten_duong']}, {c['khu_vuc']}")
 
             anh = doc("SELECT du_lieu FROM anh_can_ho WHERE can_ho_id = %s ORDER BY thu_tu, id", (c["id"],))
-            if anh:
-                st.image(bytes(anh[0]["du_lieu"]), width="stretch")
-                if len(anh) > 1:
-                    with st.expander(chu("them_anh", n=len(anh) - 1)):
-                        st.image([bytes(a["du_lieu"]) for a in anh[1:]], width=300)
+            xem_anh([bytes(a["du_lieu"]) for a in anh], f"anh_khach_{c['id']}", nn)
 
             dac_diem = [
                 f"{float(c['dien_tich']):g} m²" if c["dien_tich"] else None,
