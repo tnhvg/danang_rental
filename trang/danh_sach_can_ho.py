@@ -2,13 +2,14 @@
 Bấm "Xem chi tiết" để xem từng ảnh, toàn bộ thông tin, đổi trạng thái, thêm ảnh.
 """
 
+import html
 import io
 
 import streamlit as st
 from PIL import Image
 
 from csdl import doc, ghi
-from giao_dien import xem_anh
+from giao_dien import anh_cua_can, chen_css, the_chu, xem_anh
 from tien_ich import dinh_dang_gia, hoa_hong, mo_ta_trang_thai, nen_anh, thu_nho
 
 TRANG_THAI = ["còn trống", "sắp trống", "đã cọc", "đã cho thuê"]
@@ -59,6 +60,15 @@ def dac_diem(c: dict) -> list[str]:
     return [d for d in ds if d]
 
 
+def trang_thai_html(c: dict) -> str:
+    """Trạng thái có màu, dạng HTML (dùng trong thẻ có cắt chữ)."""
+    if c["trang_thai_hom_nay"] == "còn trống":
+        return "<b style='color:#16a34a'>Còn trống</b>"
+    if c["trang_thai_hom_nay"] == "sắp trống":
+        return f"<b style='color:#ea580c'>{mo_ta_trang_thai('sắp trống', c['ngay_trong'])}</b>"
+    return f"<b style='opacity:0.6'>{c['trang_thai_hom_nay'].capitalize()}</b>"
+
+
 def trang_thai_mau(c: dict) -> str:
     """Trạng thái có màu: xanh = còn trống, cam = sắp trống, xám = đã cọc / đã thuê."""
     if c["trang_thai_hom_nay"] == "còn trống":
@@ -86,8 +96,7 @@ def hien_chi_tiet(can_id: int) -> None:
 
     cot_anh, cot_thong_tin = st.columns([3, 2])
     with cot_anh:
-        anh = [bytes(a["du_lieu"]) for a in
-               doc("SELECT du_lieu FROM anh_can_ho WHERE can_ho_id = %s ORDER BY thu_tu, id", (can["id"],))]
+        anh = anh_cua_can(can["id"])
         if anh:
             xem_anh(anh, f"anh_{can['id']}")
         else:
@@ -99,7 +108,8 @@ def hien_chi_tiet(can_id: int) -> None:
                 for i, tep in enumerate(anh_moi):
                     ghi("INSERT INTO anh_can_ho (can_ho_id, du_lieu, thu_tu) VALUES (%s, %s, %s)",
                         (can["id"], nen_anh(tep.getvalue()), len(anh) + i))
-                anh_bia.clear()  # ảnh bìa có thể đã đổi
+                anh_bia.clear()      # ảnh bìa có thể đã đổi
+                anh_cua_can.clear()  # xoá bản lưu tạm để thấy ảnh mới
                 st.rerun()
 
     with cot_thong_tin:
@@ -138,6 +148,8 @@ def hien_chi_tiet(can_id: int) -> None:
                     st.toast("Đã lưu ✅")
                     st.rerun()
 
+
+chen_css()
 
 if "can_dang_xem" in st.session_state:
     hien_chi_tiet(st.session_state["can_dang_xem"])
@@ -185,11 +197,15 @@ for dau_hang in range(0, len(dang_hien), SO_COT):
     for c, cot in zip(dang_hien[dau_hang:dau_hang + SO_COT], st.columns(SO_COT)):
         with cot.container(border=True):
             st.image(bia.get(c["id"], anh_trong()), width="stretch")
-            st.markdown(f"**📍 {dia_chi(c)}**")
-            st.markdown(f"{ten_phong(c)} · **{dinh_dang_gia(c['gia_thue'])}/tháng** · {trang_thai_mau(c)}"
-                        + (" · ⚠️" if c["so_ngay_chua_xac_nhan"] > SO_NGAY_CANH_BAO
-                           and c["trang_thai_hom_nay"] in ("còn trống", "sắp trống") else ""))
-            st.caption(" · ".join(dac_diem(c)))
+            # html.escape: chữ bạn gõ (tên đường...) được hiện đúng nguyên văn, không bị hiểu nhầm thành HTML
+            canh_bao = " · ⚠️" if (c["so_ngay_chua_xac_nhan"] > SO_NGAY_CANH_BAO
+                                   and c["trang_thai_hom_nay"] in ("còn trống", "sắp trống")) else ""
+            phong = "Studio" if c["so_phong_ngu"] == 0 else f"{c['so_phong_ngu']} PN"
+            # Trạng thái nằm dòng riêng để không bao giờ bị dấu "..." che mất
+            the_chu([f"📍 <b>{html.escape(dia_chi(c))}</b>",
+                     f"{phong} · <b>{dinh_dang_gia(c['gia_thue'])}/tháng</b>",
+                     f"{trang_thai_html(c)}{canh_bao}"],
+                    " · ".join(dac_diem(c)))
             if st.button("Xem chi tiết", key=f"xem_{c['id']}", width="stretch"):
                 st.session_state["can_dang_xem"] = c["id"]
                 st.rerun()

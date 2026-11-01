@@ -13,6 +13,7 @@ import psycopg
 import streamlit as st
 from psycopg.conninfo import conninfo_to_dict
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool, PoolTimeout
 
 THOI_DIEM_NAP = time.time()  # app.py dùng để biết file này có bị sửa sau khi nạp không
 
@@ -62,24 +63,31 @@ LOI_KET_NOI = [
 
 # Các file SQL web tự chạy khi khởi động, để không phải vào Supabase chạy tay
 FILE_CAP_NHAT = [Path(__file__).parent / "sql" / ten for ten in ("04_don_gian_hoa.sql", "05_mo_ta_tieng_anh.sql")]
-_da_cap_nhat_cau_truc = False
 
 
-def _ket_noi():
-    global _da_cap_nhat_cau_truc
-    # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối
-    # (pooler) của Supabase không hỗ trợ.
+@st.cache_resource(show_spinner=False)
+def _be_ket_noi(chuoi: str) -> ConnectionPool:
+    """Bể kết nối (connection pool): giữ sẵn vài kết nối mở và dùng lại.
+
+    Trước đây mỗi câu SQL mở một kết nối mới tới Supabase, mất vài trăm mili-giây mỗi lần,
+    nên trang nào hỏi database nhiều lần thì chậm. cache_resource: cả web chỉ tạo MỘT bể.
+    """
+    # Lần đầu: kết nối thử (sai chuỗi thì báo lỗi dễ hiểu) và tự cập nhật cấu trúc database
+    with psycopg.connect(chuoi, prepare_threshold=None, connect_timeout=10) as kn:
+        for tep in FILE_CAP_NHAT:
+            kn.execute(tep.read_text(encoding="utf-8"))
+    # prepare_threshold=None: tắt "câu lệnh chuẩn bị sẵn", vì cổng kết nối (pooler) của Supabase không hỗ trợ.
+    # max_idle: kết nối không dùng quá 2 phút thì đóng, tránh dùng phải kết nối đã bị máy chủ ngắt.
+    return ConnectionPool(chuoi, min_size=1, max_size=4, timeout=15, max_idle=120, max_lifetime=900,
+                          kwargs={"row_factory": dict_row, "prepare_threshold": None, "connect_timeout": 10})
+
+
+def _lay_be() -> ConnectionPool:
     chuoi = _chuoi_ket_noi()
     try:
         # Spinner chỉ hiện nếu kết nối lâu hơn nửa giây, nên bình thường không thấy
         with st.spinner("Đang kết nối database..."):
-            kn = psycopg.connect(chuoi, row_factory=dict_row, prepare_threshold=None, connect_timeout=10)
-            if not _da_cap_nhat_cau_truc:
-                for tep in FILE_CAP_NHAT:
-                    kn.execute(tep.read_text(encoding="utf-8"))
-                kn.commit()
-                _da_cap_nhat_cau_truc = True
-            return kn
+            return _be_ket_noi(chuoi)
     except psycopg.Error as loi:
         _dung_vi_loi(loi, chuoi)
 
@@ -102,6 +110,9 @@ def _dung_vi_loi(loi: Exception, chuoi: str = ""):
         st.error("Database **chưa có bảng**. Vào Supabase → SQL Editor, chạy lần lượt 3 file "
                  "`sql/01_bang_co_ban.sql`, `sql/02_can_ho_gio_hang.sql`, `sql/03_bao_mat.sql`.")
         st.stop()
+    if isinstance(loi, PoolTimeout):
+        st.error("Database **đang bận hoặc không trả lời**. Đợi vài giây rồi tải lại trang (F5).")
+        st.stop()
     goc = str(loi)
     for doan_chu, giai_thich in LOI_KET_NOI:
         if doan_chu in goc:
@@ -115,18 +126,31 @@ def _dung_vi_loi(loi: Exception, chuoi: str = ""):
 
 def doc(sql: str, tham_so=None) -> list[dict]:
     """Chạy câu SELECT, trả về danh sách các dòng. Mỗi dòng là một dict {tên cột: giá trị}."""
-    with _ket_noi() as kn:
+    be = _lay_be()
+    for lan_thu in (1, 2):
         try:
-            return kn.execute(sql, tham_so).fetchall()
+            with be.connection() as kn:
+                return kn.execute(sql, tham_so).fetchall()
         except psycopg.errors.UndefinedTable as loi:
+            _dung_vi_loi(loi)
+        except psycopg.OperationalError:
+            # Kết nối trong bể có thể đã bị máy chủ ngắt: đọc lại một lần bằng kết nối khác
+            if lan_thu == 2:
+                raise
+        except PoolTimeout as loi:
             _dung_vi_loi(loi)
 
 
 def ghi(sql: str, tham_so=None) -> dict | None:
-    """Chạy INSERT/UPDATE/DELETE. Nếu câu lệnh có RETURNING thì trả về dòng đầu tiên."""
-    with _ket_noi() as kn:
-        try:
+    """Chạy INSERT/UPDATE/DELETE. Nếu câu lệnh có RETURNING thì trả về dòng đầu tiên.
+
+    Không tự thử lại như doc(): ghi hai lần có thể tạo ra hai căn giống nhau.
+    """
+    try:
+        with _lay_be().connection() as kn:
             con_tro = kn.execute(sql, tham_so)
-        except psycopg.errors.UndefinedTable as loi:
-            _dung_vi_loi(loi)
-        return con_tro.fetchone() if con_tro.description else None
+            return con_tro.fetchone() if con_tro.description else None
+    except psycopg.errors.UndefinedTable as loi:
+        _dung_vi_loi(loi)
+    except PoolTimeout as loi:
+        _dung_vi_loi(loi)
