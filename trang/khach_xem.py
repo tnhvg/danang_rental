@@ -12,7 +12,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from csdl import doc
-from giao_dien import xem_anh
+from giao_dien import anh_cua_can, chen_css, xem_anh
 from tien_ich import vi_tri_gan_dung
 
 THOI_DIEM_NAP = time.time()  # app.py dùng để biết file này có bị sửa sau khi nạp không
@@ -104,6 +104,7 @@ def hien_gio_hang(ma_link: str) -> None:
         ORDER BY v.trang_thai_hom_nay NOT IN ('còn trống', 'sắp trống'), v.gia_thue
     """, (khach[0]["id"],))
 
+    chen_css()
     st.title(chu("tieu_de", ten=khach[0]["ten"]))
     sdt = _sdt_zalo()
     if sdt:
@@ -139,8 +140,7 @@ def hien_gio_hang(ma_link: str) -> None:
             # Chỉ hiện tên đường và khu vực, KHÔNG hiện số nhà
             st.markdown(f":green[**{trang_thai}**] · {c['ten_duong']}, {c['khu_vuc']}")
 
-            anh = doc("SELECT du_lieu FROM anh_can_ho WHERE can_ho_id = %s ORDER BY thu_tu, id", (c["id"],))
-            xem_anh([bytes(a["du_lieu"]) for a in anh], f"anh_khach_{c['id']}", nn)
+            xem_anh(anh_cua_can(c["id"]), f"anh_khach_{c['id']}", nn)
 
             dac_diem = [
                 f"{float(c['dien_tich']):g} m²" if c["dien_tich"] else None,
